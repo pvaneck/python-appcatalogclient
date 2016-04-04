@@ -11,13 +11,21 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-
-from appcatalogclient.v1 import catalog
+import requests
 
 
 class CatalogManager(object):
     """Manager for the catalog."""
 
-    def __init__(self, *args, **kwargs):
-        pass
-        
+    def __init__(self, api_url):
+        self.catalog_url = api_url + 'assets'
+    
+    def list_catalog(self):
+        response = requests.get(self.catalog_url)
+        return response.json()
+    
+    def get_app(self, app_name):
+        catalog = self.list_catalog()
+        for service in catalog['assets']:
+            if app_name == service['name']:
+                return service

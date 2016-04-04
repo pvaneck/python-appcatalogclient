@@ -12,20 +12,25 @@
 #   under the License.
 
 import json
+import logging
+import os
 import sys
 
 from cliff import command
 from cliff import lister
 from cliff import show
 
-from appcatalogclient.v1 import catalog
+
+LOG = logging.getLogger(__name__)
 
 
-class ListCatalog(lister.Lister):
+class ListApps(lister.Lister):
     """List full app catalog."""
+    
+    fields = ['Name', 'Hash', 'Type', 'License']
 
     def get_parser(self, prog_name):
-        parser = super(ListClusterTemplates, self).get_parser(prog_name)
+        parser = super(ListApps, self).get_parser(prog_name)
 
         parser.add_argument(
             '--long',
@@ -33,27 +38,37 @@ class ListCatalog(lister.Lister):
             default=False,
             help='List additional fields in output',
         )
-        parser.add_argument(
-            '--plugin',
-            metavar="<plugin>",
-            help="List cluster templates for specific plugin"
-        )
+
+        return parser
+
+    def take_action(self, parsed_args):
+        client = self.app.client_manager.appcatalog
+        catalog_json = client.catalog.list_catalog()
+
+        return (self.fields,
+                ((s['name'], 
+                  s.get('hash', ''),
+                  s['service']['type'],
+                  s.get('license', '')) for s in catalog_json['assets'])
+                )
+
+
+class ShowApp(show.ShowOne):
+    """Show details of one specific app."""
+
+    def get_parser(self, prog_name):
+        parser = super(ShowApp, self).get_parser(prog_name)
 
         parser.add_argument(
-            '--version',
-            metavar="<version>",
-            help="List cluster templates with specific version of the "
-                 "plugin"
-        )
-
-        parser.add_argument(
-            '--name',
-            metavar="<name-substring>",
-            help="List cluster templates with specific substring in the "
-                 "name"
+            'application',
+            metavar="<application>",
+            help='Name of the application',
         )
 
         return parser
 
-     def take_action(self, parsed_args):
-         return 'hello'
+    def take_action(self, parsed_args):
+        client = self.app.client_manager.appcatalog
+        app = client.catalog.get_app(parsed_args.application)
+        fields = ('Name', 'Type', 'Description')
+        return self.dict2columns(app)

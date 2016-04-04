@@ -18,7 +18,8 @@ from appcatalogclient.v1 import catalog
 class Client(object):
     """Client for the App Catalog v1 API."""
 
+    API_URL = 'http://apps.openstack.org/api/v1/'
+    
     def __init__(self, *args, **kwargs):
         """Initialize a new client for the App Catalog v1 API."""
-
-        self.catalog = catalog.CatalogManager()
+        self.catalog = catalog.CatalogManager(self.API_URL)
